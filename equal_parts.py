@@ -4,7 +4,7 @@ from scipy.integrate import quad
 from scipy.optimize import fsolve
 
 # Задаем параметры спирали
-r = 1  # Радиус
+r = 3  # Радиус
 num_turns = 10
 num_points = 10000
 
@@ -59,6 +59,26 @@ points = np.array([spiral(t) for t in t_values])
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 x, y, z = spiral(np.linspace(0, 1, num_points))
+
+for point in points:
+    print(point)
+    # Вектор нормали направлен от центра сферы к точке на поверхности
+    # normal = np.array([points[0], points[1], points[2]])
+    normal = point / np.linalg.norm(point)  # Нормализуем вектор нормали
+    
+    # Рисуем векторы нормалей
+    ax.quiver(point[0], point[1], point[2], normal[0], normal[1], normal[2], color='g', length=0.5, normalize=True)
+
+# Добавляем векторы нормалей в каждой n-й точке
+# for i in range(0, len(x), int(segment_length)):
+#     # Вектор нормали направлен от центра сферы к точке на поверхности
+#     normal = np.array([x[i], y[i], z[i]])
+#     normal = normal / np.linalg.norm(normal)  # Нормализуем вектор нормали
+    
+#     # Рисуем векторы нормалей
+#     ax.quiver(x[i], y[i], z[i], normal[0], normal[1], normal[2], color='g', length=0.2, normalize=True)
+
+
 ax.plot(x, y, z, label='Сферическая спираль')
 
 # Отображение точек разбиения
