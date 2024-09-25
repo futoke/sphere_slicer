@@ -61,13 +61,12 @@ ax = fig.add_subplot(111, projection='3d')
 x, y, z = spiral(np.linspace(0, 1, num_points))
 
 for point in points:
-    print(point)
     # Вектор нормали направлен от центра сферы к точке на поверхности
     # normal = np.array([points[0], points[1], points[2]])
     normal = point / np.linalg.norm(point)  # Нормализуем вектор нормали
     
     # Рисуем векторы нормалей
-    ax.quiver(point[0], point[1], point[2], normal[0], normal[1], normal[2], color='g', length=0.5, normalize=True)
+    # ax.quiver(point[0], point[1], point[2], normal[0], normal[1], normal[2], color='g', length=0.5, normalize=True)
 
 # Добавляем векторы нормалей в каждой n-й точке
 # for i in range(0, len(x), int(segment_length)):
@@ -82,7 +81,7 @@ for point in points:
 ax.plot(x, y, z, label='Сферическая спираль')
 
 # Отображение точек разбиения
-ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='r', label='Точки разбиения')
+# ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='r', label='Точки разбиения')
 
 # Настройки графика
 ax.set_xlabel("X")

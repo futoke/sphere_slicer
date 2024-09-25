@@ -37,131 +37,84 @@ def create_helix(r, num_points, num_turns):
     return np.transpose(points)
 
 
-def create_helix_ng(r, seg_num, num_turns=40):
-    N = num_turns # Количество витков.
-    delta_z = 2*r / seg_num
-
-    x = []
-    y = []
-    z = []
-
-    i = 1
-
-    while i <= seg_num:
-        z_i = -r + i * delta_z
-        x_i = r * sin(acos(z_i / r)) * cos(((N * pi * z_i) / r) + 1)
-        y_i = r * sin(acos(z_i / r)) * sin(((N * pi * z_i) / r) + 1)
-        
-        x += [x_i]
-        y += [y_i]
-        z += [z_i]
-
-        i += 0.1
-    return np.array([x, y, z]).transpose()
+# Производные спирали
+def helix_derivative(t):
+    h = 1e-5  # Шаг для численного дифференцирования
+    return (spiral(t + h) - spiral(t)) / h
 
 
-def merge_points(points, tolerance=1):
-    dist = 0
-    res = np.empty((0, 3))
-    res = np.append(res, points[0].reshape((1, 3)), axis=0)
-    
-    for idx, _ in enumerate(points):
-        if idx + 1 < len(points):
-            length = np.linalg.norm(points[idx] - points[idx + 1])
-            dist += length
-            if dist > tolerance:
-                res = np.append(res, points[idx + 1].reshape((1, 3)), axis=0)
-                dist = 0
-    
-    return res
+# Функция для расчета длины дуги
+def arc_length(t):
+    dx, dy, dz = spiral_derivative(t)
+    return np.sqrt(dx**2 + dy**2 + dz**2)
 
 
-# def test_segments():
-    # points = create_helix_ng(30, 1000)
-    # print(points.size, points.shape)
-    # points = merge_points(points)
-    # print(points.size, points.shape)
-    # trimesh.PointCloud(points).show()
-
-    # x, y, z = points[:, 0], points[:, 1], points[:, 2]
-    # ax.plot(x, y, z)
-
-    # for i in range(0, len(y), 1):
-    #     normal = np.array([y[i], y[i], y[i]])
-    #     normal = normal / np.linalg.norm(normal)  # Нормализуем вектор нормали
-
-    #     ax.quiver(x[i], y[i], z[i], normal[0], normal[1], normal[2], color='g', length=3, normalize=True)
-
-    # plt.show()
-            
-# test_segments()
-
-# mesh = trimesh.load_mesh("models/cat-2.stl")
-# mesh.vertices -= mesh.center_mass
+mesh = trimesh.load_mesh("models/cat-2.stl")
+mesh.vertices -= mesh.center_mass
 
 scene = []
-layer = 1
+layer = 0.5
 step = 0.1
+width = 0.4
 
 all_points = np.empty(shape=(0, 3))
 
-POINTS_MULTIPLEXER = 2
-TURNS_MULTEPLEXER = 10
+r0 = 0.5   
 
-# Это для анимации
 pcd_array = []
+layer_points = 1
+n = 1
 
-# while True:
-#     # Расчет количества точек исходя из отношения площадей сфер
-#     layer_points = int(np.pi * (layer**2))
-#     points = create_helix(
-#         layer, 
-#         POINTS_MULTIPLEXER * layer_points, 
-#         TURNS_MULTEPLEXER * layer
-#     )
+while True:
+    # Расчет количества точек исходя из отношения площадей сфер
+    layer_points *= 1 + (2 / (r0 + n)) + (1 / (r0**2 + 2*r0*n*step + n**2))
+    print(int(layer_points))
+    points = create_helix(
+        layer, 
+        int(layer_points), 
+        int((pi*layer) / width)
+    )
 
-#     # points = merge_points(points)
-#     contained = mesh.contains(points)
+    contained = mesh.contains(points)
 
-#     all_points = np.append(all_points, points[contained], axis=0)
-#     trimesh.PointCloud(all_points).export(f'ply/{next(counter):07d}.ply', encoding="ascii")
+    # all_points = np.append(all_points, points[contained], axis=0)
+    # trimesh.PointCloud(all_points).export(f'ply/{next(counter):07d}.ply', encoding="ascii")
 
 
-#     # ax.plot(points[:, 0], points[:, 1], points[:, 2])
+    # ax.plot(points[:, 0], points[:, 1], points[:, 2])
 
-#     # Рисуем точки в numpy
-#     # ax.scatter(
-#     #     points[contained][:, 0], 
-#     #     points[contained][:, 1], 
-#     #     points[contained][:, 2],
-#     #     s=0.1
-#     # )
+    # Рисуем точки в numpy
+    # ax.scatter(
+    #     points[contained][:, 0], 
+    #     points[contained][:, 1], 
+    #     points[contained][:, 2],
+    #     s=0.1
+    # )
 
-#     # scene += [trimesh.PointCloud(points)]
-#     # scene += [trimesh.PointCloud(points[contained])]
+    # scene += [trimesh.PointCloud(points)]
+    # scene += [trimesh.PointCloud(points[contained])]
 
-#     pcd = o3d.geometry.PointCloud()
-#     pcd.points = o3d.utility.Vector3dVector(points[contained])
-#     pcd_array += [pcd]
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points[contained])
+    pcd_array += [pcd]
 
-#     layer += step
-#     print(f"Высота слоя {layer:.2f}")
+    n += 1
+    layer += step
+    print(f"Высота слоя {layer:.2f}")
 
-#     if np.all(contained == False):
-#         break
+    if np.all(contained == False):
+        break
 
 # print(total_points)
-# o3d.visualization.draw_geometries(pcd_array)
+o3d.visualization.draw_geometries(pcd_array)
 
 
-points = create_helix(10, 1000, 10)
+# points = create_helix(10, 1000, 10)
 
 
-pcd = o3d.geometry.PointCloud()
-pcd.points = o3d.utility.Vector3dVector(points)
-# pcd.colors = o3d.utility.Vector3dVector(colors/65535)
-# pcd.normals = o3d.utility.Vector3dVector(normals)
-o3d.visualization.draw_geometries([pcd])
+# pcd = o3d.geometry.PointCloud()
+# pcd.points = o3d.utility.Vector3dVector(points)
+# o3d.visualization.draw_geometries([pcd])
 
 # trimesh.Scene(scene).show()
 # plt.show()
